@@ -5,11 +5,6 @@
 #include <ws2tcpip.h> 
 #include <windows.h>
 
-// Run using
-// gcc -o server Server.c -lws2_32
-// For port
-// server [any high number > 1024]
-
 void error(const char *msg) {
     perror(msg);
     exit(1);
@@ -71,32 +66,10 @@ int main(int argc, char *argv[]) {
 
     // Main loop to handle client communication
     while(1) {
-        memset(buffer, 0, 255);
-        n = recv(newsockfd, buffer, 255, 0);
-        if (n < 0) {
-            error("Error on reading");
-        }
-
-        printf("Client : %s\n", buffer);
-        memset(buffer, 0, 255);
-        fgets(buffer, 255, stdin);
-
-        n = send(newsockfd, buffer, strlen(buffer), 0);
-        if(n < 0) {
-            error("Error on Writing");
-        }
-
-        int i = strncmp("Bye", buffer, 3);
-        if (i == 0) {
-            break;
-        }
-        
     }
 
-    closesocket(newsockfd);
-    closesocket(sockfd);
-
+    // Clean up Winsock
     WSACleanup();
-
+    
     return 0;
 }
