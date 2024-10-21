@@ -7,8 +7,6 @@
 
 // Run using
 // gcc -o server Server.c -lws2_32
-// For port
-// server [any high number > 1024]
 
 void error(const char *msg) {
     perror(msg);
@@ -16,8 +14,13 @@ void error(const char *msg) {
 }
 
 int main(int argc, char *argv[]) {
-    // Initialize Winsock
     WSADATA wsaData;
+    SOCKET serverSocket, clientSocket;
+    struct sockaddr_in serv_addr, cli_addr;
+    socklen_t clilen;
+    int n, portNo;
+    char buffer[255]; //Number of chars sent to clients from server
+
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         // If WSAStartup fails, print an error message and exit the program
         fprintf(stderr, "WSAStartup failed.\n");
@@ -31,48 +34,44 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    int sockfd, newsockfd, portno, n;
-    char buffer[255]; //Number of chars sent to clients from server
-
-    struct sockaddr_in serv_addr, cli_addr;
-    socklen_t clilen;
-
     // Create a socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd < 0) {
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if(serverSocket < 0) {
         error("Error opening Socket.");
     }
 
-    // Clear the server address structure
-    memset((char *) &serv_addr, 0, sizeof(serv_addr));
-    portno = atoi(argv[1]); // Convert the port number from string to integer
-
     // Set up the server address structure
+    memset((char *)&serv_addr, 0, sizeof(serv_addr));
+    portNo = atoi(argv[1]);
     serv_addr.sin_family = AF_INET; // Use IPv4
     serv_addr.sin_addr.s_addr = INADDR_ANY; // Accept connections from any IP address
-    serv_addr.sin_port = htons(portno); // Convert port number to network byte order
+    serv_addr.sin_port = htons(portNo); // Convert port number to network byte order
 
     // Bind the socket to the server address
-    if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    if(bind(serverSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         error("Binding Failed.");
     }
 
     // Listen for incoming connections, with a backlog of 4
-    listen(sockfd, 4);
+    listen(serverSocket, 4);
     clilen = sizeof(cli_addr); // Get the size of the client address structure
 
+    printf("Awaiting Heroes.....\n");
+
     // Accept an incoming connection
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    clientSocket = accept(serverSocket, (struct sockaddr *) &cli_addr, &clilen);
 
     // Check if the connection was accepted successfully
-    if(newsockfd < 0) {
+    if(clientSocket < 0) {
         error("Error on Accept");
+    } else {
+        printf("A Hero as joined the party!\n");
     }
 
     // Main loop to handle client communication
     while(1) {
         memset(buffer, 0, 255);
-        n = recv(newsockfd, buffer, 255, 0);
+        n = recv(clientSocket, buffer, 255, 0);
         if (n < 0) {
             error("Error on reading");
         }
@@ -81,7 +80,7 @@ int main(int argc, char *argv[]) {
         memset(buffer, 0, 255);
         fgets(buffer, 255, stdin);
 
-        n = send(newsockfd, buffer, strlen(buffer), 0);
+        n = send(clientSocket, buffer, strlen(buffer), 0);
         if(n < 0) {
             error("Error on Writing");
         }
@@ -93,8 +92,8 @@ int main(int argc, char *argv[]) {
         
     }
 
-    closesocket(newsockfd);
-    closesocket(sockfd);
+    closesocket(clientSocket);
+    closesocket(serverSocket);
 
     WSACleanup();
 

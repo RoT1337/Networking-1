@@ -27,24 +27,26 @@ void error(const char *msg) {
 int main(int argc, char *argv[]) {
     // Initialize Winsock
     WSADATA wsaData;
+    SOCKET sockfd;
+    int n, portNo;
+    struct sockaddr_in serv_addr;
+    struct hostent *server;
+    char buffer[255];
+
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         // If WSAStartup fails, print an error message and exit the program
         fprintf(stderr, "WSAStartup failed.\n");
         exit(1);
     }
 
-    int sockfd, portno, n;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
-
-    char buffer[255];
     if (argc < 3) {
         fprintf(stderr, "usage %s hostname port\n", argv[0]);
         exit(1);
     }
-    portno = atoi(argv[2]);
+
+    portNo = atoi(argv[2]);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
+    if (sockfd == INVALID_SOCKET) {
         error("ERROR opening socket");
     }
 
@@ -55,9 +57,9 @@ int main(int argc, char *argv[]) {
 
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    memcpy((char *) server->h_addr, (char *) &serv_addr.sin_addr.s_addr, server->h_length);
-    serv_addr.sin_port = htons(portno);
-    if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    serv_addr.sin_port = htons(portNo);
+    memcpy((char *) &serv_addr.sin_addr.s_addr, (char *) server->h_addr, server->h_length);
+    if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == SOCKET_ERROR) {
         error("Connection Failed");
     }
 
@@ -83,7 +85,6 @@ int main(int argc, char *argv[]) {
     }
 
     closesocket(sockfd);
-
     WSACleanup();
     
     return 0;
