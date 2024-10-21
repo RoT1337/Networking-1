@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
     memcpy((char *) &serv_addr.sin_addr.s_addr, (char *) server->h_addr, server->h_length);
     if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == SOCKET_ERROR) {
         error("Connection Failed");
+    } else {
+        printf("Welcome!");
     }
 
     while(1) {
