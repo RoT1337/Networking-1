@@ -13,6 +13,14 @@ void error(const char *msg) {
     exit(1);
 }
 
+void startStory(char *buffer) {
+    strcpy(buffer, "You find yourself at the entrance of the dungeon. What do you do?\n"
+                    "1. Go through the entrance\n"
+                    "2. Examine your surroundings\n"
+                    "3. Turn back\n"
+                    "Enter your choice: ");
+}
+
 int main(int argc, char *argv[]) {
     WSADATA wsaData;
     SOCKET serverSocket, clientSocket;
@@ -65,28 +73,47 @@ int main(int argc, char *argv[]) {
     if(clientSocket < 0) {
         error("Error on Accept");
     } else {
-        printf("A Hero as joined the party!\n");
+        printf("A Hero has joined the party!\n");
     }
 
     // Main loop to handle client communication
     while(1) {
+        memset(buffer, 0, 255);
+        startStory(buffer);
+        n = send(clientSocket, buffer, strlen(buffer), 0);
+        if (n < 0) {
+            error("Error on Writing");
+        }
+        
         memset(buffer, 0, 255);
         n = recv(clientSocket, buffer, 255, 0);
         if (n < 0) {
             error("Error on reading");
         }
 
-        printf("Client : %s\n", buffer);
-        memset(buffer, 0, 255);
-        fgets(buffer, 255, stdin);
+        int choice = atoi(buffer);
+        switch (choice) {
+            case 1:
+                strcpy(buffer, "You chose to go through the entrance.\n");
+                break;
+            case 2:
+                strcpy(buffer, "You chose to examine your surroundings.\n");
+                break;
+            case 3:
+                strcpy(buffer, "You chose to turn back.\n");
+                break;
+            default:
+                strcpy(buffer, "You cannot do that\n");
+                break;
+        }
 
         n = send(clientSocket, buffer, strlen(buffer), 0);
         if(n < 0) {
             error("Error on Writing");
         }
 
-        int i = strncmp("Bye", buffer, 3);
-        if (i == 0) {
+        if (choice == 3) {
+            printf("You chose to stop the adventure.");
             break;
         }
         

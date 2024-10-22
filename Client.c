@@ -62,10 +62,17 @@ int main(int argc, char *argv[]) {
     if(connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == SOCKET_ERROR) {
         error("Connection Failed");
     } else {
-        printf("Welcome!");
+        printf("You joined the party!\n");
     }
 
     while(1) {
+        memset(buffer, 0, 255);
+        n = recv(sockfd, buffer, 255, 0);
+        if (n < 0) {
+            error("Error on writing");
+        }
+        printf("Gamemaster: %s", buffer);
+
         memset(buffer, 0, 255);
         fgets(buffer, 255, stdin);
         n = send(sockfd, buffer, strlen(buffer), 0);
@@ -73,14 +80,7 @@ int main(int argc, char *argv[]) {
             error("Error on writing");
         }
 
-        memset(buffer, 0, 255);
-        n = recv(sockfd, buffer, 255, 0);
-        if (n < 0) {
-            error("Error on reading");
-        }
-        printf("Server: %s", buffer);
-
-        int i = strncmp("Bye", buffer, 3);
+        int i = strncmp("Leaving", buffer, 7);
         if (i == 0) {
             break;
         }
