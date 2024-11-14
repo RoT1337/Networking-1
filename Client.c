@@ -66,6 +66,15 @@ int main(int argc, char *argv[]) {
     }
 
     while(1) {
+        printf("Type 'start' to begin the game: ");
+        fgets(buffer, sizeof(buffer), stdin);
+        if (strncmp(buffer, "start", 5) == 0) {
+            send(sockfd, buffer, strlen(buffer), 0);
+            break;
+        }
+    }
+
+    while(1) {
         memset(buffer, 0, 255);
         n = recv(sockfd, buffer, 255, 0);
         if (n < 0) {
@@ -73,12 +82,19 @@ int main(int argc, char *argv[]) {
         }
         printf("Gamemaster: %s", buffer);
 
-        memset(buffer, 0, 255);
+        printf("Enter your choice (1, 2, or 3): ");
         fgets(buffer, 255, stdin);
         n = send(sockfd, buffer, strlen(buffer), 0);
         if (n < 0) {
             error("Error on writing");
         }
+
+        memset(buffer, 0, 255);
+        n = recv(sockfd, buffer, 255, 0);
+        if (n < 0) {
+            error("Error on reading");
+        }
+        printf("Gamemaster: %s", buffer);
 
         int i = strncmp("Leaving", buffer, 7);
         if (i == 0) {
