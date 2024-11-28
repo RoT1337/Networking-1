@@ -23,6 +23,7 @@ void startStory(Player players[], int player_count) {
                         "3. Turn back\n";
     for (int i = 0; i < player_count; i++) {
         send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
     }
 }
 
@@ -53,6 +54,7 @@ int main() {
     Player players[MAX_PLAYERS];
     char buffer[BUFFER_SIZE];
     int player_count = 0;
+    int game_started = 0;
 
     // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -90,67 +92,81 @@ int main() {
 
     printf("Awaiting Adventurers...\n");
 
-    // Accept player connections
-    while (player_count < MAX_PLAYERS) {
-        clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &addrLen);
-        if (clientSocket == INVALID_SOCKET) {
-            printf("Accept failed. Error Code: %d\n", WSAGetLastError());
+    // Accept first player connection
+    while (!game_started) {
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(serverSocket, &readfds);
+        if (player_count > 0) {
+            FD_SET(players[0].socket, &readfds);
+        }
+
+        struct timeval timeout;
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        int activity = select(0, &readfds, NULL, NULL, &timeout);
+
+        if (activity == SOCKET_ERROR) {
+            printf("select call failed with error code: %d\n", WSAGetLastError());
             closesocket(serverSocket);
             WSACleanup();
             return 1;
         }
 
-        players[player_count].socket = clientSocket;
-        players[player_count].is_active = 1;
-        snprintf(players[player_count].color, sizeof(players[player_count].color), "\033[1;%dm", 31 + player_count); // Assign different colors
-        player_count++;
-        printf("Player %d connected.\n", player_count);
+        // Check if we need to accept more players
+        if (FD_ISSET(serverSocket, &readfds) && player_count < MAX_PLAYERS) {
+            clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &addrLen);
+            if (clientSocket != INVALID_SOCKET) {
+                players[player_count].socket = clientSocket;
+                players[player_count].is_active = 1;
+                snprintf(players[player_count].color, sizeof(players[player_count].color), "\033[1;%dm", 31 + player_count); // Assign different colors
+                player_count++;
+                printf("Player %d connected.\n", player_count);
 
-        // Enter player name
-        send(clientSocket, "Enter your name: ", 18, 0);
-        int bytesRead = recv(clientSocket, players[player_count - 1].name, sizeof(players[player_count - 1].name) - 1, 0);
-        if (bytesRead > 0) {
-            players[player_count - 1].name[bytesRead] = '\0'; // Null-terminate the string
-            printf("Player %d name: %s\n", player_count, players[player_count - 1].name);
-        } else {
-            printf("recv failed: %d\n", WSAGetLastError());
-            closesocket(clientSocket);
-            closesocket(serverSocket);
-            WSACleanup();
-            return 1;
-        }
-
-        // If the first player, prompt to start the game
-        if (player_count == 1) {
-            send(clientSocket, "Type 'start' to begin the game.\n", 32, 0);
-        }
-    }
-
-    // Wait for the first player to type "start"
-    while (1) {
-        int bytesRead = recv(players[0].socket, buffer, BUFFER_SIZE, 0);
-        if (bytesRead > 0) {
-            buffer[bytesRead] = '\0'; // Null-terminate the string
-            if (strcmp(buffer, "start") == 0) {
-                printf("Game started by Player 1.\n");
-                for (int i = 0; i < player_count; i++) {
-                    send(players[i].socket, "The game has started!\n", 22, 0);
+                send(players[player_count - 1].socket, "Enter your name: ", 18, 0);
+                int bytesRead = recv(players[player_count - 1].socket, players[player_count - 1].name, sizeof(players[player_count - 1].name) - 1, 0);
+                if (bytesRead > 0) {
+                    players[player_count - 1].name[bytesRead] = '\0'; // Null-terminate the string
+                    printf("Player %d name: %s\n", player_count, players[player_count - 1].name);
+                } else {
+                    printf("recv failed: %d\n", WSAGetLastError());
+                    closesocket(players[player_count - 1].socket);
+                    players[player_count - 1].is_active = 0;
                 }
-                startStory(players, player_count);
-                break;
-            } else {
-                send(players[0].socket, "Invalid command. Type 'start' to begin the game.\n", 48, 0);
+
+                // If the first player, prompt to start the game
+                if (player_count == 1) {
+                    send(clientSocket, "Type 'start' to begin the game.\n", 32, 0);
+                }
             }
-        } else {
-            printf("recv failed: %d\n", WSAGetLastError());
-            closesocket(players[0].socket);
-            closesocket(serverSocket);
-            WSACleanup();
-            return 1;
+        }
+
+        // Check if the first player has typed "start"
+        if (player_count > 0 && FD_ISSET(players[0].socket, &readfds)) {
+            int bytesRead = recv(players[0].socket, buffer, BUFFER_SIZE, 0);
+            if (bytesRead > 0) {
+                buffer[bytesRead] = '\0'; // Null-terminate the string
+                printf("Received from player: %s\n", buffer); // Debug print
+                if (strcmp(buffer, "start") == 0) {
+                    printf("Game started by Player 1.\n");
+                    game_started = 1;
+                } else {
+                    send(players[0].socket, "Invalid command. Type 'start' to begin the game.\n", 48, 0);
+                    printf("Sent invalid command message to player 1\n"); // Debug print
+                }
+            } else if (bytesRead == SOCKET_ERROR) {
+                printf("recv failed: %d\n", WSAGetLastError());
+                closesocket(players[0].socket);
+                players[0].is_active = 0;
+            }
         }
     }
 
-    // Game Start
+    // Start the story
+    startStory(players, player_count);
+
+    // Game loop
     int choices[MAX_PLAYERS];
     while (1) {
         for (int i = 0; i < player_count; i++) {
@@ -168,17 +184,29 @@ int main() {
         // Randomize choices and send result to players
         int result = randomizeChoices(player_count, choices);
         char resultMessage[BUFFER_SIZE];
-        if (result == 99) {
-            snprintf(resultMessage, sizeof(resultMessage), "A funny random event occurs!\n");
-        } else {
-            snprintf(resultMessage, sizeof(resultMessage), "The chosen action is: %d\n", result);
+        switch(result) {
+            case 1:
+                snprintf(resultMessage, sizeof(resultMessage), "You go through the entrance.\n");
+                break;
+            case 2:
+                snprintf(resultMessage, sizeof(resultMessage), "You examine your surroundings.\n");
+                break;
+            case 3:
+                snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
+                break;
+            case 99:
+                snprintf(resultMessage, sizeof(resultMessage), "A funny random event occurs!\n");
+                break;
         }
 
         for (int i = 0; i < player_count; i++) {
             if (players[i].is_active) {
                 send(players[i].socket, resultMessage, strlen(resultMessage), 0);
+                printf("Sent result to player %d\n", i + 1); // Debug
             }
         }
+
+        // Send the next prompt to players
     }
 
     // Cleanup

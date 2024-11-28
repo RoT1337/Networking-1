@@ -40,6 +40,7 @@ int main() {
     struct sockaddr_in serverAddr;
     char buffer[BUFFER_SIZE];
     int bytesRead;
+    int nameRead = 0;
 
     // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -65,18 +66,64 @@ int main() {
     printf("Connected to server.\n");
     printHeader();
 
+    while (1) { // TODO: Have player 1 be able to input name and still start the game.
+        bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+        if (bytesRead > 0) {
+            buffer[bytesRead] = '\0'; // Null-terminate the string
+            printf("\nGame Master:\n%s\n", buffer);
+
+            if (strstr(buffer, "Type 'start' to begin the game.") != NULL) {
+                // Get player action
+                printf("Enter your action: ");
+                fgets(buffer, BUFFER_SIZE, stdin);
+                buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+
+                // Send action to server
+                send(clientSocket, buffer, strlen(buffer), 0);
+                printf("Sent action to server: %s\n", buffer);
+                if (strcmp(buffer, "start") == 0) {
+                    break;
+                }
+            } else {
+                fgets(buffer, BUFFER_SIZE, stdin);
+                buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+                send(clientSocket, buffer, strlen(buffer), 0);
+                nameRead = 1;
+                break;
+            }
+        } else if (bytesRead == 0) {
+            printf("Connection closed by server.\n");
+            closesocket(clientSocket);
+            WSACleanup();
+            return 1;
+        } else {
+            error_exit("recv failed");
+        }
+    }
+
     // Receive player name prompt from server
+    if (nameRead != 1) {
+        bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+        if (bytesRead > 0) {
+            buffer[bytesRead] = '\0'; // Null-terminate the string
+            printf("\nGame Master:\n%s\n", buffer);
+
+            // Send player name to server
+            fgets(buffer, BUFFER_SIZE, stdin);
+            buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+            send(clientSocket, buffer, strlen(buffer), 0);
+        } else {
+            error_exit("Failed to receive player name prompt from server");
+        }
+    }
+    
+
     bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0'; // Null-terminate the string
-        printf("\nServer:\n%s\n", buffer);
-
-        // Send player name to server
-        fgets(buffer, BUFFER_SIZE, stdin);
-        buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
-        send(clientSocket, buffer, strlen(buffer), 0);
+        printf("\nGame Master:\n%s\n", buffer);
     } else {
-        error_exit("Failed to receive player name prompt from server");
+        error_exit("Failed to receive story prompt from server");
     }
 
     // Game loop
@@ -88,7 +135,7 @@ int main() {
             printf("\nServer:\n%s\n", buffer);
 
             // Check if the server is prompting for an action
-            if (strstr(buffer, "What do you do?") != NULL || strstr(buffer, "Type 'start' to begin the game.") != NULL) {
+            if (strstr(buffer, "What do you do?") != NULL) {
                 // Get player action
                 printf("Enter your action: ");
                 fgets(buffer, BUFFER_SIZE, stdin);
@@ -96,6 +143,7 @@ int main() {
 
                 // Send action to server
                 send(clientSocket, buffer, strlen(buffer), 0);
+                printf("Sent action to server: %s\n", buffer);
             }
         } else if (bytesRead == 0) {
             printf("Connection closed by server.\n");
