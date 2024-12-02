@@ -65,11 +65,40 @@ int main() {
     printf("Connected to server.\n");
     printHeader();
 
+    while (1) {
+        bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+        if (bytesRead > 0) {
+            buffer[bytesRead] = '\0'; // Null-terminate the string
+            printf("\nServer:\n%s\n", buffer);
+
+            if (strstr(buffer, "Type 'start' to begin the game.") != NULL) {
+                // Get player action
+                printf("Enter your action: ");
+                fgets(buffer, BUFFER_SIZE, stdin);
+                buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+
+                // Send action to server
+                send(clientSocket, buffer, strlen(buffer), 0);
+                printf("Sent action to server: %s\n", buffer);
+                if (strcmp(buffer, "start") == 0) {
+                    break;
+                }
+            }
+        } else if (bytesRead == 0) {
+            printf("Connection closed by server.\n");
+            closesocket(clientSocket);
+            WSACleanup();
+            return 1;
+        } else {
+            error_exit("recv failed");
+        }
+    }
+
     // Receive player name prompt from server
     bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0'; // Null-terminate the string
-        printf("\nGame Master:\n%s\n", buffer);
+        printf("\nServer:\n%s\n", buffer);
 
         // Send player name to server
         fgets(buffer, BUFFER_SIZE, stdin);

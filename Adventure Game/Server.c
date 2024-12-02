@@ -167,8 +167,9 @@ int main() {
     startStory(players, player_count);
 
     // Game loop
+    int game_over = 0;
     int choices[MAX_PLAYERS];
-    while (1) {
+    while (game_over == 0) {
         for (int i = 0; i < player_count; i++) {
             int bytesRead = recv(players[i].socket, buffer, BUFFER_SIZE, 0);
             if (bytesRead > 0) {
@@ -193,6 +194,7 @@ int main() {
                 break;
             case 3:
                 snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
+                game_over = 1;
                 break;
             case 99:
                 snprintf(resultMessage, sizeof(resultMessage), "A funny random event occurs!\n");

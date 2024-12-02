@@ -79,6 +79,24 @@ int main() {
         error_exit("Failed to receive player name prompt from server");
     }
 
+    // Receive start game prompt from server
+    bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
+    if (bytesRead > 0) {
+        buffer[bytesRead] = '\0'; // Null-terminate the string
+        printf("\nGame Master:\n%s\n", buffer);
+
+        // Get player action
+        printf("Enter your action: ");
+        fgets(buffer, BUFFER_SIZE, stdin);
+        buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+
+        // Send action to server
+        send(clientSocket, buffer, strlen(buffer), 0);
+        printf("Sent action to server: %s\n", buffer);
+    } else {
+        error_exit("Failed to receive start game prompt from server");
+    }
+
     // Game loop
     while (1) {
         // Receive message from server
