@@ -103,7 +103,7 @@ int main() {
         bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
         if (bytesRead > 0) {
             buffer[bytesRead] = '\0'; // Null-terminate the string
-            printf("\nServer:\n%s\n", buffer);
+            printf("\nGame Master:\n%s\n", buffer);
 
             // Check if the server is prompting for an action
             if (strstr(buffer, "What do you do?") != NULL) {

@@ -27,6 +27,24 @@ void startStory(Player players[], int player_count) {
     }
 }
 
+void throughEntrance(Player players[], int player_count) {
+    const char *story = "As you enter the entrance, you find yourself in a corridor that leads to 2 ways, left and right. What do you do?\n"
+                        "1. Go left\n"
+                        "2. Go right\n"
+                        "3. Turn back\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void examineSurroundings(Player player[], int player_count) {
+    const char *story = "You examine your surroundings and find nothing of interest. What do you do?\n"
+                        "1. Go through the entrance\n"
+                        "2. Turn back\n";
+}
+
+
 int randomizeChoices(int numClients, int *choices) {
     int randomValue = rand() % 100;
     if (randomValue < 70) { // 70% chance: Select the most common choice
@@ -163,13 +181,19 @@ int main() {
         }
     }
 
-    // Start the story
-    startStory(players, player_count);
-
     // Game loop
     int game_over = 0;
+    int level = 0; // Maybe add save file through this variable
+    int groupChoice = 0;
     int choices[MAX_PLAYERS];
+
     while (game_over == 0) {
+        if (level == 0) {
+            startStory(players, player_count);
+        } else if (level == 1 && groupChoice == 1) {
+            throughEntrance(players, player_count);
+        }
+        
         for (int i = 0; i < player_count; i++) {
             int bytesRead = recv(players[i].socket, buffer, BUFFER_SIZE, 0);
             if (bytesRead > 0) {
@@ -185,21 +209,52 @@ int main() {
         // Randomize choices and send result to players
         int result = randomizeChoices(player_count, choices);
         char resultMessage[BUFFER_SIZE];
-        switch(result) {
-            case 1:
-                snprintf(resultMessage, sizeof(resultMessage), "You go through the entrance.\n");
-                break;
-            case 2:
-                snprintf(resultMessage, sizeof(resultMessage), "You examine your surroundings.\n");
-                break;
-            case 3:
-                snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
-                game_over = 1;
-                break;
-            case 99:
-                snprintf(resultMessage, sizeof(resultMessage), "A funny random event occurs!\n");
-                break;
+
+        if (level == 0) {
+            switch(result) {
+                case 1:
+                    snprintf(resultMessage, sizeof(resultMessage), "You go through the entrance.\n");
+                    groupChoice = 1;
+                    break;
+                case 2:
+                    snprintf(resultMessage, sizeof(resultMessage), "You examine your surroundings.\n");
+                    break;
+                case 3:
+                    snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
+                    game_over = 1;
+                    break;
+                case 99:
+                    snprintf(resultMessage, sizeof(resultMessage), "Bad luck brought you here.\n");
+                    break;
+                default:
+                    snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
+                    game_over = 1;
+                    break;
+            }    
+            level++;
+        } else if (level == 1 && groupChoice == 1) {
+            switch(result) {
+                case 1:
+                    snprintf(resultMessage, sizeof(resultMessage), "You go left.\n");
+                    break;
+                case 2:
+                    snprintf(resultMessage, sizeof(resultMessage), "You go right.\n");
+                    break;
+                case 3:
+                    snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
+                    game_over = 1;
+                    break;
+                case 99:
+                    snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1 depth is kinda L bro no skibidi.\n");
+                    break;
+                default:
+                    snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
+                    game_over = 1;
+                    break;
+            }
+            level++;
         }
+        
 
         for (int i = 0; i < player_count; i++) {
             if (players[i].is_active) {
@@ -207,8 +262,6 @@ int main() {
                 printf("Sent result to player %d\n", i + 1); // Debug
             }
         }
-
-        // Send the next prompt to players
     }
 
     // Cleanup
