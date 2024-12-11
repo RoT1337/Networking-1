@@ -39,16 +39,66 @@ void throughEntrance(Player players[], int player_count) {
 }
 
 void examineSurroundings(Player player[], int player_count) {
-    const char *story = "You examine your surroundings and find nothing of interest. What do you do?\n"
+    if(player_count == 1) {
+        const char *story = "You examine your surroundings and find an obsidian key. You decide to pick up the key. What do you do?\n"
                         "1. Go through the entrance\n"
                         "2. Turn back\n";
+    } else {
+        const char *story = "You examine your surroundings and find an obsidian key. The party leader decides to pick up the key. What do you do?\n"
+                        "1. Go through the entrance\n"
+                        "2. Turn back\n";
+    }
 }
 
+void goLeftDoor(Player player[], int player_count) {
+    const char *story = "You go through the door and all of a sudden it gets blocked by a stone wall coming up from the ground. Following that, 4 pillars rise from the ground. It seems to be a puzzle that requires the symbols within the pillar to be aligned. What do you do?\n"
+                        "1. Interact with pillar 'Eagle'\n"
+                        "2. Interact with pillar 'Swan'\n"
+                        "3. Interact with pillar 'Raven'\n"
+                        "4. Interact with pillar 'Hawk'\n"
+                        "5. Turn Back\n";
+}
+
+void choseEaglePillar(Player player[], int player_count) {
+    const char *story = "You interact with the Eagle pillar. Which way do you want it to point?\n"
+                        "1. Face the pillar north\n"
+                        "2. Face the pillar east\n"
+                        "3. Face the pillar south\n"
+                        "4. Face the pillar west\n"
+                        "5. Turn Back\n";
+}
+
+void choseSwanPillar(Player player[], int player_count) {
+    const char *story = "You interact with the Swan pillar. Which way do you want it to point?\n"
+                        "1. Face the pillar north\n"
+                        "2. Face the pillar east\n"
+                        "3. Face the pillar south\n"
+                        "4. Face the pillar west\n"
+                        "5. Turn Back\n";
+}
+
+void choseRavenPillar(Player player[], int player_count) {
+    const char *story = "You interact with the Raven pillar. Which way do you want it to point?\n"
+                        "1. Face the pillar north\n"
+                        "2. Face the pillar east\n"
+                        "3. Face the pillar south\n"
+                        "4. Face the pillar west\n"
+                        "5. Turn Back\n";
+}
+
+void choseHawkPillar(Player player[], int player_count) {
+    const char *story = "You interact with the Hawk pillar. Which way do you want it to point?\n"
+                        "1. Face the pillar north\n"
+                        "2. Face the pillar east\n"
+                        "3. Face the pillar south\n"
+                        "4. Face the pillar west\n"
+                        "5. Turn Back\n";
+}
 
 int randomizeChoices(int numClients, int *choices) {
     int randomValue = rand() % 100;
     if (randomValue < 70) { // 70% chance: Select the most common choice
-        int count[3] = {0, 0, 0};
+        int count[5] = {0, 0, 0, 0, 0};
         for (int i = 0; i < numClients; i++) {
             count[choices[i] - 1]++;
         }
@@ -186,12 +236,55 @@ int main() {
     int level = 0; // Maybe add save file through this variable
     int groupChoice = 0;
     int choices[MAX_PLAYERS];
+    char resultMessage[BUFFER_SIZE];
+    int choseLeftDoor = 0;
+
+    // Items
+    int obsidianKey = 0;
+
+    // Left Door Option Picked
+    int eagle = 0;
+    int swan = 0;
+    int raven = 0;
+    int hawk = 0;
+    // 1 North, 2 East, 3 South, 4 West
+    int eagleFace = 0;
+    int swanFace = 0;
+    int ravenFace = 0;
+    int hawkFace = 0;
+
+    int pillarDone = 0;
+
+    if (eagleFace == 1 && swanFace == 2 && ravenFace == 3 && hawkFace == 4) {
+        pillarDone = 1;
+    }
 
     while (game_over == 0) {
-        if (level == 0) {
-            startStory(players, player_count);
-        } else if (level == 1 && groupChoice == 1) {
-            throughEntrance(players, player_count);
+        switch (level) {
+            case 0:
+                if (groupChoice == 2) {
+                    examineSurroundings(players, player_count);
+                    obsidianKey = 1;
+                } else {
+                    startStory(players, player_count);
+                }
+                break;
+            case 1:
+                if (groupChoice == 1) {
+                    throughEntrance(players, player_count);
+                } 
+
+                if (choseLeftDoor == 1) {
+                    goLeftDoor(players, player_count);
+                } /*else if (choseLeftDoor == 1 && eagle == 1) {
+                    choseEaglePillar(players, player_count);
+                }*/
+
+
+                break;
+            default:
+                snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
+                break;
         }
         
         for (int i = 0; i < player_count; i++) {
@@ -208,16 +301,17 @@ int main() {
 
         // Randomize choices and send result to players
         int result = randomizeChoices(player_count, choices);
-        char resultMessage[BUFFER_SIZE];
 
         if (level == 0) {
-            switch(result) {
+            switch(result) { //startStory
                 case 1:
                     snprintf(resultMessage, sizeof(resultMessage), "You go through the entrance.\n");
                     groupChoice = 1;
+                    level = 1;
                     break;
                 case 2:
                     snprintf(resultMessage, sizeof(resultMessage), "You examine your surroundings.\n");
+                    groupChoice = 2;
                     break;
                 case 3:
                     snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
@@ -225,15 +319,28 @@ int main() {
                     break;
                 case 99:
                     snprintf(resultMessage, sizeof(resultMessage), "Bad luck brought you here.\n");
+                    game_over = 1;
                     break;
                 default:
                     snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
                     game_over = 1;
                     break;
-            }    
-            level++;
+            }
+        } else if (level == 0 && groupChoice == 2) {
+              switch(result) { //examineSurroundings
+                case 1:
+                    snprintf(resultMessage, sizeof(resultMessage), "You go through the entrance.\n");
+                    groupChoice = 1;
+                    level = 1;
+                    break;
+                case 2:
+                    snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
+                    game_over = 1;
+                    break;
+              }
         } else if (level == 1 && groupChoice == 1) {
-            switch(result) {
+            if (groupChoice == 1) { 
+                switch(result) { //goThroughEntrance
                 case 1:
                     snprintf(resultMessage, sizeof(resultMessage), "You go left.\n");
                     break;
@@ -246,15 +353,44 @@ int main() {
                     break;
                 case 99:
                     snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1 depth is kinda L bro no skibidi.\n");
+                    game_over = 1;
                     break;
                 default:
                     snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
                     game_over = 1;
                     break;
-            }
+                }
+            } 
+            if (choseLeftDoor = 1) {
+                switch(result) {//goLeftDoor
+                    case 1:
+                        snprintf(resultMessage, sizeof(resultMessage), "You chose the 'Eagle' pillar");
+                        eagle = 1;
+                        break;
+                }
+                if (eagle == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You face the Eagle pillar north");
+                            eagleFace = 1;
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You face the Eagle pillar east");
+                            eagleFace = 2;
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You face the Eagle pillar south");
+                            eagleFace = 3;
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You face the Eagle pillar west");
+                            eagleFace = 4;
+                            break;
+                        
+                    }
+                }
             level++;
-        }
-        
+            } 
 
         for (int i = 0; i < player_count; i++) {
             if (players[i].is_active) {
@@ -263,12 +399,14 @@ int main() {
             }
         }
     }
-
+        
     // Cleanup
     for (int i = 0; i < player_count; i++) {
         closesocket(players[i].socket);
     }
+    
     closesocket(serverSocket);
     WSACleanup();
     return 0;
+}
 }
