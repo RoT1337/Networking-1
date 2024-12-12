@@ -56,7 +56,7 @@ void examineSurroundings(Player players[], int player_count) {
 }
 
 void goLeftDoor(Player players[], int player_count) {
-    const char *story = "You go through the door and all of a sudden it gets blocked by a stone wall coming up from the ground. Following that, 4 pillars rise. It seems to be a puzzle that requires the symbols within the pillar to be aligned. What do you do?\n"
+    const char *story = "You go through the door and all of a sudden it gets blocked by a stone wall coming up from the ground. Following that, 4 pillars rise. It seems to be a puzzle that requires the symbols within the pillar to be aligned. The roof of the room has something writ on it: 'The amount of arrows determines its face.'. What do you do?\n"
                         "1. Interact with pillar 'Eagle'\n"
                         "2. Interact with pillar 'Swan'\n"
                         "3. Interact with pillar 'Raven'\n"
@@ -69,7 +69,7 @@ void goLeftDoor(Player players[], int player_count) {
 }
 
 void choseEaglePillar(Player players[], int player_count) {
-    const char *story = "You interact with the Eagle pillar. What do you do?\n"
+    const char *story = "You interact with the Eagle pillar. An engraving on the pillar looks like this: '↑↑↑←'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -82,7 +82,7 @@ void choseEaglePillar(Player players[], int player_count) {
 }
 
 void choseSwanPillar(Player players[], int player_count) {
-    const char *story = "You interact with the Swan pillar. What do you do?\n"
+    const char *story = "You interact with the Swan pillar. An engraving on the pillar looks like this: '↑→→←'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -95,7 +95,7 @@ void choseSwanPillar(Player players[], int player_count) {
 }
 
 void choseRavenPillar(Player players[], int player_count) {
-    const char *story = "You interact with the Raven pillar. What do you do?\n"
+    const char *story = "You interact with the Raven pillar. An engraving on the pillar looks like this: '↑→↓↓'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -108,7 +108,7 @@ void choseRavenPillar(Player players[], int player_count) {
 }
 
 void choseHawkPillar(Player players[], int player_count) {
-    const char *story = "You interact with the Hawk pillar. What do you do?\n"
+    const char *story = "You interact with the Hawk pillar. An engraving on the pillar looks like this: '←←←←'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -120,10 +120,18 @@ void choseHawkPillar(Player players[], int player_count) {
     }
 }
 
-void goUnderground(Player players[], int player_count) {
-     const char *story = "You find yourself in front of a twisting maze where your footsteps echo eerily. A faint whisper suggests a path 'Left, Right, Left, Straight'. What do you do?\n"
-                        "1. Follow the whispers\n"
-                        "2. Forge your own path through the maze\n"
+void goRightDoor(Player players[], int player_count) {
+    const char *story = "You go through the right door and all of a sudden a you feel a metal plate depress beneath you. The doors around the room are locked using damascus steel, near impossible to get through.";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void goArmory(Player players[], int player_count) {
+     const char *story = "As you reach the bottom of the stairs, you notice a locked door to your left, and another path heading downwards to your right. You notice an engraving: 'Only the obsidian key may open this.' What do you do?\n"
+                        "1. Open the locked door\n"
+                        "2. Continue to the right door\n"
                         "3. Turn back\n";
     for (int i = 0; i < player_count; i++) {
         send(players[i].socket, story, strlen(story), 0);
@@ -178,7 +186,7 @@ int main() {
 
     // Prepare the sockaddr_in structure
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_addr.s_addr = inet_addr("192.168.0.2");
     serverAddr.sin_port = htons(PORT);
 
     // Bind
@@ -285,6 +293,7 @@ int main() {
 
     // Items
     int obsidianKey = 0;
+    int weaponAndArmor = 0;
 
     //For Level 1
     int choseLeftDoor = 0;
@@ -337,7 +346,7 @@ int main() {
                             send(players[i].socket, story, strlen(story), 0);
                             printf("Sent story to player %d\n", i + 1); // Debug
                         }
-                        goUnderground(players, player_count);
+                        goArmory(players, player_count);
                         level = 2;
                     } else {
                         const char *story = "Nothing Happens\n\n";
@@ -351,7 +360,7 @@ int main() {
                 }
                 break;
             case 2:
-                goUnderground(players, player_count);
+                goArmory(players, player_count);
                 break;
             default:
                 snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
@@ -439,6 +448,7 @@ int main() {
                                 groupChoice = 5;
                                 if(eagleFace == 1 && swanFace == 2 && ravenFace == 3 && hawkFace == 4) {
                                     pillarDone = 1;
+                                    level = 2;
                                 } 
                                 break;
                             default: 
@@ -574,9 +584,25 @@ int main() {
         } else if (level == 2) {
             switch(result) {
                 case 1:
-                case 2:
+                    if (obsidianKey == 1) {
+                        snprintf(resultMessage, sizeof(resultMessage), "You open the locked door and the party equips a rusted sword, a sturdy shield, and a leather tunic. Surprisingly, there's enough for everyone.\n");
+                        weaponAndArmor = 1;
+                        level = 3;
+                        break;
+                    } else {
+                        snprintf(resultMessage, sizeof(resultMessage), "You try and prick the locked door with a stick you found, but it will not budge. You don't have the key for this door.\n");
+                        break;
+                    }
+                case 2: 
+                    snprintf(resultMessage, sizeof(resultMessage), "You proceed towards the right door.\n");
+                        level = 3;
+                        break;
                 case 3:
                     snprintf(resultMessage, sizeof(resultMessage), "You stop adventuring at this point.\n");
+                    game_over = 1;
+                    break;
+                default:
+                    snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
                     game_over = 1;
                     break;
             }
@@ -586,7 +612,9 @@ int main() {
                 send(players[i].socket, resultMessage, strlen(resultMessage), 0);
                 printf("Sent result to player %d\n", i + 1); // Debug
             }
-        }
+        } /*else if (level = 3) {
+
+        }*/
     }
     // Cleanup
     for (int i = 0; i < player_count; i++) {

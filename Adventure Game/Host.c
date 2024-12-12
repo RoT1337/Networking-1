@@ -5,7 +5,7 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "192.168.0.2"
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
