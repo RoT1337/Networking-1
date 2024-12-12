@@ -69,7 +69,7 @@ void goLeftDoor(Player players[], int player_count) {
 }
 
 void choseEaglePillar(Player players[], int player_count) {
-    const char *story = "You interact with the Eagle pillar. An engraving on the pillar looks like this: '↑↑↑←'. What do you do?\n"
+    const char *story = "You interact with the Eagle pillar. An engraving on the pillar looks says this: 'North North North West'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -82,7 +82,7 @@ void choseEaglePillar(Player players[], int player_count) {
 }
 
 void choseSwanPillar(Player players[], int player_count) {
-    const char *story = "You interact with the Swan pillar. An engraving on the pillar looks like this: '↑→→←'. What do you do?\n"
+    const char *story = "You interact with the Swan pillar. An engraving on the pillar looks like this: 'North East East West'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -95,7 +95,7 @@ void choseSwanPillar(Player players[], int player_count) {
 }
 
 void choseRavenPillar(Player players[], int player_count) {
-    const char *story = "You interact with the Raven pillar. An engraving on the pillar looks like this: '↑→↓↓'. What do you do?\n"
+    const char *story = "You interact with the Raven pillar. An engraving on the pillar looks like this: 'North East South South'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -108,7 +108,7 @@ void choseRavenPillar(Player players[], int player_count) {
 }
 
 void choseHawkPillar(Player players[], int player_count) {
-    const char *story = "You interact with the Hawk pillar. An engraving on the pillar looks like this: '←←←←'. What do you do?\n"
+    const char *story = "You interact with the Hawk pillar. An engraving on the pillar looks like this: 'West West West West'. What do you do?\n"
                         "1. Face the pillar north\n"
                         "2. Face the pillar east\n"
                         "3. Face the pillar south\n"
@@ -121,18 +121,55 @@ void choseHawkPillar(Player players[], int player_count) {
 }
 
 void goRightDoor(Player players[], int player_count) {
-    const char *story = "You go through the right door and all of a sudden a you feel a metal plate depress beneath you. The doors around the room are locked using damascus steel, near impossible to get through.";
+    const char *story = "The path leads to a small, square room with a single pedestal in the center. On the pedestal, there is a set of three glowing orbs: red, blue, and green. The walls are inscribed with faint glowing text, hinting at the solution. What do you do?\n"
+                        "1. Interact with the first wall.\n"
+                        "2. Interact with the second wall.\n"
+                        "3. Interact with the third wall.\n"
+                        "4. Touch the large orb to check the orb's placements.\n";
     for (int i = 0; i < player_count; i++) {
         send(players[i].socket, story, strlen(story), 0);
         printf("Sent story to player %d\n", i + 1); // Debug
     }
 }
 
-void goArmory(Player players[], int player_count) {
-     const char *story = "As you reach the bottom of the stairs, you notice a locked door to your left, and another path heading downwards to your right. You notice an engraving: 'Only the obsidian key may open this.' What do you do?\n"
-                        "1. Open the locked door\n"
-                        "2. Continue to the right door\n"
-                        "3. Turn back\n";
+void firstWallInteract(Player players[], int player_count) {
+    const char *story = "You interact with the first wall. You noticed the wall has texts on it. It says: 'Passion opens the way but does not go last. What do you do?'\n"
+                        "1. Place the red orb here.\n"
+                        "2. Place the blue orb here.\n"
+                        "3. Place the green orb here.\n"
+                        "4. Return for a full view of the walls.\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void secondWallInteract(Player players[], int player_count) {
+    const char *story = "You interact with the second wall. You noticed the wall has texts on it. It says: 'The color of envy follows the sea. What do you do?'\n"
+                        "1. Place the red orb here.\n"
+                        "2. Place the blue orb here.\n"
+                        "3. Place the green orb here.\n"
+                        "4. Return for a full view of the walls.\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void thirdWallInteract(Player players[], int player_count) {
+    const char *story = "You interact with the third wall. You noticed the wall has texts on it. It says: 'The calm ocean's hue leads. What do you do?'\n"
+                        "1. Place the red orb here.\n"
+                        "2. Place the blue orb here.\n"
+                        "3. Place the green orb here.\n"
+                        "4. Return for a full view of the walls.\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void finish(Player players[], int player_count) {
+     const char *story = "As you reach the bottom of the stairs, you are greeted by a treasure chest with which gold and splendor is stored inside. You finished your short quest!.\n";
     for (int i = 0; i < player_count; i++) {
         send(players[i].socket, story, strlen(story), 0);
         printf("Sent story to player %d\n", i + 1); // Debug
@@ -310,6 +347,15 @@ int main() {
     int raven = 0;
     int hawk = 0;
     int pillarDone = 0;
+    // 1 First Wall, 2 Second Wall, 3 Third Wall
+    int redOrb = 0;
+    int blueOrb = 0;
+    int greenOrb = 0;
+    // Right Door Option Picked
+    int firstWall = 0;
+    int secondWall = 0;
+    int thirdWall = 0;
+    int wallsDone = 0;
 
     while (game_over == 0) {
         switch (level) {
@@ -336,9 +382,38 @@ int main() {
                         } else {
                             goLeftDoor(players, player_count);
                         }
+                    } else if (choseRightDoor == 1 && doorState == 1) {
+                        if (firstWall == 1) {
+                            firstWallInteract(players, player_count);
+                        } else if (secondWall == 1) {
+                            secondWallInteract(players, player_count);
+                        } else if (thirdWall == 1) {
+                            thirdWallInteract(players, player_count);
+                        } else {
+                            goRightDoor(players, player_count);
+                        }
                     } else {
                         throughEntrance(players, player_count);
                     }
+                } else if (groupChoice == 4) { 
+                    if (wallsDone == 1) {
+                        const char *story = "The orbs glow and the barriers are lowered. This also reveals a pathway heading downwards.\n\n";
+                        for (int i = 0; i < player_count; i++) {
+                            send(players[i].socket, story, strlen(story), 0);
+                            printf("Sent story to player %d\n", i + 1); // Debug
+                        }
+                        finish(players, player_count);
+                        game_over = 0;
+                    } else {
+                        const char *story = "Nothing Happens\n\n";
+                        for (int i = 0; i < player_count; i++) {
+                            send(players[i].socket, story, strlen(story), 0);
+                            printf("Sent story to player %d\n", i + 1); // Debug
+                        }
+                        groupChoice = 1;
+                        goRightDoor(players, player_count);
+                    }
+
                 } else if (groupChoice == 5) {
                     if (pillarDone == 1) {
                         const char *story = "The button clicks as the stone blocking the door is lowered. This also reveals a pathway heading downwards.\n\n";
@@ -346,8 +421,8 @@ int main() {
                             send(players[i].socket, story, strlen(story), 0);
                             printf("Sent story to player %d\n", i + 1); // Debug
                         }
-                        goArmory(players, player_count);
-                        level = 2;
+                        finish(players, player_count);
+                        game_over = 0;
                     } else {
                         const char *story = "Nothing Happens\n\n";
                         for (int i = 0; i < player_count; i++) {
@@ -360,7 +435,7 @@ int main() {
                 }
                 break;
             case 2:
-                goArmory(players, player_count);
+                finish(players, player_count);
                 break;
             default:
                 snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
@@ -370,8 +445,8 @@ int main() {
         for (int i = 0; i < player_count; i++) {
             int bytesRead = recv(players[i].socket, buffer, BUFFER_SIZE, 0);
             if (bytesRead > 0) {
-                buffer[bytesRead] = '\0'; // Null-terminate the string
-                choices[i] = atoi(buffer); // Convert choice to integer
+                buffer[bytesRead] = '\0'; 
+                choices[i] = atoi(buffer); 
             } else {
                 printf("recv failed: %d\n", WSAGetLastError());
                 closesocket(players[i].socket);
@@ -403,7 +478,7 @@ int main() {
                         game_over = 1;
                         break;
                     default:
-                        snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
+                        snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                         game_over = 1;
                         break;
                 }
@@ -416,6 +491,10 @@ int main() {
                         break;
                     case 2:
                         snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
+                        game_over = 1;
+                        break;
+                    default:
+                        snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                         game_over = 1;
                         break;
                 }
@@ -444,7 +523,7 @@ int main() {
                                 hawk = 1;
                                 break;
                             case 5:
-                                snprintf(resultMessage, sizeof(resultMessage), "You press the button to check the orientations\n");
+                                snprintf(resultMessage, sizeof(resultMessage), "You press the button\n");
                                 groupChoice = 5;
                                 if(eagleFace == 1 && swanFace == 2 && ravenFace == 3 && hawkFace == 4) {
                                     pillarDone = 1;
@@ -478,6 +557,10 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 eagle = 0;
                                 break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;                                
                         }
                     } else if (swan == 1) {
                         switch(result) {
@@ -501,6 +584,10 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 swan = 0;
                                 break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
                         }
                     } else if (raven == 1) {
                         switch(result) {
@@ -524,6 +611,10 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 raven = 0;
                                 break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
                         }
                     } else if (hawk == 1) {
                         switch(result) {
@@ -547,6 +638,109 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 hawk = 0;
                                 break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
+                        }
+                    }
+                } else if (choseRightDoor == 1 && doorState == 1) { // goRightDoor
+                    printf("Red Orb: %d, Blue Orb: %d, Green Orb: %d\n", redOrb, blueOrb, greenOrb); // Debug
+                    if (firstWall == 0 && secondWall == 0 && thirdWall == 0) {
+                        switch(result) {
+                            case 1:
+                                snprintf(resultMessage, sizeof(resultMessage), "You interact with the first wall\n");
+                                firstWall = 1;
+                                break;
+                            case 2:
+                                snprintf(resultMessage, sizeof(resultMessage), "You interact with the second wall\n");
+                                secondWall = 1;
+                                break;
+                            case 3:
+                                snprintf(resultMessage, sizeof(resultMessage), "You interact with the third wall\n");
+                                thirdWall = 1;
+                                break;
+                            case 4:
+                                snprintf(resultMessage, sizeof(resultMessage), "You touch the large orb to check the placements\n");
+                                groupChoice = 4;
+                                if(redOrb == 1 && greenOrb == 2 && blueOrb == 3) {
+                                    wallsDone = 1;
+                                    level = 2;
+                                } 
+                                break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
+                        }
+                    } else if (firstWall == 1) {
+                        switch(result) {
+                            case 1:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the red orb here\n");
+                                redOrb = 1;
+                                break;
+                            case 2:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the blue orb here\n");
+                                blueOrb = 1;
+                                break;
+                            case 3:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the green orb here\n");
+                                greenOrb = 1;
+                                break;
+                            case 4:
+                                snprintf(resultMessage, sizeof(resultMessage), "You return for a full view of the walls\n");
+                                firstWall = 0;
+                                break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
+                        }
+                    } else if (secondWall == 1) {
+                        switch(result) {
+                            case 1:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the red orb here\n");
+                                redOrb = 2;
+                                break;
+                            case 2:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the blue orb here\n");
+                                blueOrb = 2;
+                                break;
+                            case 3:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the green orb here\n");
+                                greenOrb = 2;
+                                break;
+                            case 4:
+                                snprintf(resultMessage, sizeof(resultMessage), "You return for a full view of the walls\n");
+                                secondWall = 0;
+                                break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
+                        }
+                    } else if (thirdWall = 1) {
+                        switch(result) {
+                            case 1:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the red orb here\n");
+                                redOrb = 3;
+                                break;
+                            case 2:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the blue orb here\n");
+                                blueOrb = 3;
+                                break;
+                            case 3:
+                                snprintf(resultMessage, sizeof(resultMessage), "You place the green orb here\n");
+                                greenOrb = 3;
+                                break;
+                            case 4:
+                                snprintf(resultMessage, sizeof(resultMessage), "You return for a full view of the walls\n");
+                                thirdWall = 0;
+                                break;
+                            default:
+                                snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
+                                game_over = 1;
+                                break;  
                         }
                     }
                 } else {
@@ -558,7 +752,8 @@ int main() {
                             break;
                         case 2:
                             snprintf(resultMessage, sizeof(resultMessage), "You go right.\n");
-                            //doorState = 1;
+                            choseRightDoor = 1;
+                            doorState = 1;
                             break;
                         case 3:
                             snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
@@ -576,45 +771,15 @@ int main() {
                     }
                 }
                 printf("Level: %d, GroupChoice: %d, Result: %d\n", level, groupChoice, result); // Debug output
-            } /*else if (groupChoice == 2) {
-
-            } */
-            
-        // ============================================================================================================    
-        } else if (level == 2) {
-            switch(result) {
-                case 1:
-                    if (obsidianKey == 1) {
-                        snprintf(resultMessage, sizeof(resultMessage), "You open the locked door and the party equips a rusted sword, a sturdy shield, and a leather tunic. Surprisingly, there's enough for everyone.\n");
-                        weaponAndArmor = 1;
-                        level = 3;
-                        break;
-                    } else {
-                        snprintf(resultMessage, sizeof(resultMessage), "You try and prick the locked door with a stick you found, but it will not budge. You don't have the key for this door.\n");
-                        break;
-                    }
-                case 2: 
-                    snprintf(resultMessage, sizeof(resultMessage), "You proceed towards the right door.\n");
-                        level = 3;
-                        break;
-                case 3:
-                    snprintf(resultMessage, sizeof(resultMessage), "You stop adventuring at this point.\n");
-                    game_over = 1;
-                    break;
-                default:
-                    snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
-                    game_over = 1;
-                    break;
             }
-        }
+        // ============================================================================================================    
+        } 
         for (int i = 0; i < player_count; i++) {
             if (players[i].is_active) {
                 send(players[i].socket, resultMessage, strlen(resultMessage), 0);
                 printf("Sent result to player %d\n", i + 1); // Debug
             }
-        } /*else if (level = 3) {
-
-        }*/
+        }
     }
     // Cleanup
     for (int i = 0; i < player_count; i++) {
