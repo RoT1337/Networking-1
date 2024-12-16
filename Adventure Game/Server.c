@@ -168,6 +168,39 @@ void thirdWallInteract(Player players[], int player_count) {
     }
 }
 
+void goDownstairs(Player players[], int player_count) {
+    const char *story = "A pathway leading downwards is revealed. You descend the stairs and find yourself in a dimly lit room. You see a door to the side, in front of it, an obsidian lock. You also see the path continuing the journey onwards. What do you do?\n"
+                        "1. Open the Locked Door. (Requires the Obsidian Key)\n"
+                        "2. Proceed onwards.\n"
+                        "3. Turn back\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+} 
+
+void goLabyrinth(Player players[], int player_count) {
+    const char *story = "You open the door and find yourself in a labyrinth. The walls are covered in moss and the air is damp. You continue and see that this is a maze of some sort. An eerie voice whispers in your ear, 'Left, , Left, Straight'. What do you do?\n"
+                        "1. Proceed forward\n"
+                        "2. Turn back\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void insideLabyrinth(Player players[], int player_count) {
+    const char *story = "You proceed inside the labyrinth. Get ready as there is no turning back. You may follow the whispers, but there might be treasure within. What do you do?\n"
+                        "1. Go Straight\n"
+                        "2. Go Left\n"
+                        "3. Go Right\n"
+                        "4. Turn back\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
 void finish(Player players[], int player_count) {
      const char *story = "As you reach the bottom of the stairs, you are greeted by a treasure chest with which gold and splendor is stored inside. You finished your short quest!.\n";
     for (int i = 0; i < player_count; i++) {
@@ -223,7 +256,7 @@ int main() {
 
     // Prepare the sockaddr_in structure
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr("192.168.0.2");
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port = htons(PORT);
 
     // Bind
@@ -359,7 +392,7 @@ int main() {
 
     while (game_over == 0) {
         switch (level) {
-            case 0:
+            case 0: // Level 0
                 if (groupChoice == 2) {
                     examineSurroundings(players, player_count);
                     obsidianKey = 1;
@@ -368,7 +401,7 @@ int main() {
                     startStory(players, player_count);
                 }
                 break; // Works!
-            case 1:
+            case 1: // Level 1
                 if (groupChoice == 1) {
                     if (choseLeftDoor == 1 && doorState == 1) {
                         if (eagle == 1) {
@@ -396,14 +429,9 @@ int main() {
                         throughEntrance(players, player_count);
                     }
                 } else if (groupChoice == 4) { 
-                    if (wallsDone == 1) {
-                        const char *story = "The orbs glow and the barriers are lowered. This also reveals a pathway heading downwards.\n\n";
-                        for (int i = 0; i < player_count; i++) {
-                            send(players[i].socket, story, strlen(story), 0);
-                            printf("Sent story to player %d\n", i + 1); // Debug
-                        }
-                        finish(players, player_count);
-                        game_over = 0;
+                    if (wallsDone == 1) { // Finished Left Door
+                        goDownstairs(players, player_count);
+                        level = 2;
                     } else {
                         const char *story = "Nothing Happens\n\n";
                         for (int i = 0; i < player_count; i++) {
@@ -415,14 +443,9 @@ int main() {
                     }
 
                 } else if (groupChoice == 5) {
-                    if (pillarDone == 1) {
-                        const char *story = "The button clicks as the stone blocking the door is lowered. This also reveals a pathway heading downwards.\n\n";
-                        for (int i = 0; i < player_count; i++) {
-                            send(players[i].socket, story, strlen(story), 0);
-                            printf("Sent story to player %d\n", i + 1); // Debug
-                        }
-                        finish(players, player_count);
-                        game_over = 0;
+                    if (pillarDone == 1) { // Finished Right Door
+                        goDownstairs(players, player_count);
+                        level = 2;
                     } else {
                         const char *story = "Nothing Happens\n\n";
                         for (int i = 0; i < player_count; i++) {
@@ -433,15 +456,19 @@ int main() {
                         goLeftDoor(players, player_count);
                     }
                 }
-                break;
+                break; // Works!
             case 2:
-                finish(players, player_count);
+                goDownstairs(players, player_count);
+                break;
+            case 3:
+                goLabyrinth(players, player_count);
                 break;
             default:
                 snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
                 break;
         }
         
+        // Make a Choice
         for (int i = 0; i < player_count; i++) {
             int bytesRead = recv(players[i].socket, buffer, BUFFER_SIZE, 0);
             if (bytesRead > 0) {
@@ -453,7 +480,6 @@ int main() {
                 players[i].is_active = 0;
             }
         }
-
         // Randomize choices and send result to players
         int result = randomizeChoices(player_count, choices);
 
@@ -493,6 +519,10 @@ int main() {
                         snprintf(resultMessage, sizeof(resultMessage), "You turn back.\n");
                         game_over = 1;
                         break;
+                    case 99:
+                        snprintf(resultMessage, sizeof(resultMessage), "Bad luck brought you here.\n");
+                        game_over = 1;
+                        break;
                     default:
                         snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                         game_over = 1;
@@ -500,7 +530,7 @@ int main() {
                 }
             }
         // ============================================================================================================
-        } else if (level == 1) {
+        } else if (level == 1) { // Good!
             if (groupChoice == 1) {
                 if (choseLeftDoor == 1 && doorState == 1) { // goLeftDoor
                     printf("Eagle: %d, Swan: %d, Raven: %d, Hawk: %d\n", eagleFace, swanFace, ravenFace, hawkFace); // Debug
@@ -530,6 +560,10 @@ int main() {
                                     level = 2;
                                 } 
                                 break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
+                                break;
                             default: 
                                 snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
                                 game_over = 1;
@@ -556,6 +590,10 @@ int main() {
                             case 5: // Turn Back
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 eagle = 0;
+                                break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
                                 break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
@@ -584,6 +622,10 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 swan = 0;
                                 break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
+                                break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                                 game_over = 1;
@@ -611,6 +653,10 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 raven = 0;
                                 break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
+                                break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                                 game_over = 1;
@@ -637,6 +683,10 @@ int main() {
                             case 5: // Turn Back
                                 snprintf(resultMessage, sizeof(resultMessage), "You return to look at the 4 pillars.\n");
                                 hawk = 0;
+                                break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
                                 break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
@@ -668,6 +718,10 @@ int main() {
                                     level = 2;
                                 } 
                                 break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
+                                break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                                 game_over = 1;
@@ -690,6 +744,10 @@ int main() {
                             case 4:
                                 snprintf(resultMessage, sizeof(resultMessage), "You return for a full view of the walls\n");
                                 firstWall = 0;
+                                break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
                                 break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
@@ -714,6 +772,10 @@ int main() {
                                 snprintf(resultMessage, sizeof(resultMessage), "You return for a full view of the walls\n");
                                 secondWall = 0;
                                 break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
+                                break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
                                 game_over = 1;
@@ -736,6 +798,10 @@ int main() {
                             case 4:
                                 snprintf(resultMessage, sizeof(resultMessage), "You return for a full view of the walls\n");
                                 thirdWall = 0;
+                                break;
+                            case 99:
+                                snprintf(resultMessage, sizeof(resultMessage), "Bad luck for level 1.\n");
+                                game_over = 1;
                                 break;
                             default:
                                 snprintf(resultMessage, sizeof(resultMessage), "If you get this message, contact a programmer\n");
@@ -773,7 +839,38 @@ int main() {
                 printf("Level: %d, GroupChoice: %d, Result: %d\n", level, groupChoice, result); // Debug output
             }
         // ============================================================================================================    
-        } 
+        } else if (level == 2) {
+            switch(result) {
+                case 1:
+                    if (obsidianKey == 1) {
+                        snprintf(resultMessage, sizeof(resultMessage), "You open the locked door. Inside lies swords and armor somehow enough for everyone in the party\n");
+                        weaponAndArmor = 1;
+                        level = 3;
+                        printf("Weapon and Armor Get\n");
+                    } else {
+                        snprintf(resultMessage, sizeof(resultMessage), "The door is locked. You need the Obsidian Key.\n");
+                    }
+                    break;
+                case 2:
+                    snprintf(resultMessage, sizeof(resultMessage), "You proceed onwards.\n");
+                    level = 3;
+                    break;
+                case 3:
+                    snprintf(resultMessage, sizeof(resultMessage), "You turn back from proceeding further.\n");
+                    game_over = 1;
+                    break;
+                case 99:
+                    snprintf(resultMessage, sizeof(resultMessage), "As you make your choice, a pressure plate is activated and everyone burn a fiery death. Game Over\n");
+                    game_over = 1;
+                    break;
+                default:
+                    snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
+                    game_over = 1;
+                    break;
+            }
+            printf("Level: %d, GroupChoice: %d, Result: %d\n", level, groupChoice, result); // Debug output
+        }
+        // ============================================================================================================ 
         for (int i = 0; i < player_count; i++) {
             if (players[i].is_active) {
                 send(players[i].socket, resultMessage, strlen(resultMessage), 0);

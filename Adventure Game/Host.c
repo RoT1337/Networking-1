@@ -5,7 +5,7 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-#define SERVER_IP "192.168.0.2"
+#define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
@@ -69,7 +69,7 @@ int main() {
     bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0'; // Null-terminate the string
-        printf("\033[1;34m\nGame Master:\n%s\n\033[0m");
+        printf("\033[1;34m\nGame Master:\n\033[0m");
         printf("\033[1;33m%s\n\033[0m", buffer);
 
         // Send player name to server
@@ -84,7 +84,7 @@ int main() {
     bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0'; // Null-terminate the string
-        printf("\033[1;34m\nGame Master:\n%s\n\033[0m");
+        printf("\033[1;34m\nGame Master:\n\033[0m");
         printf("\033[1;33m%s\n\033[0m", buffer);
 
         // Get player action
@@ -105,7 +105,7 @@ int main() {
         bytesRead = recv(clientSocket, buffer, BUFFER_SIZE, 0);
         if (bytesRead > 0) {
             buffer[bytesRead] = '\0'; // Null-terminate the string
-            printf("\033[1;34m\nGame Master:\n%s\n\033[0m");
+            printf("\033[1;34m\nGame Master:\n\033[0m");
             printf("\033[1;33m%s\n\033[0m", buffer);
 
             // Check if the server is prompting for an action
