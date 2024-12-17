@@ -180,7 +180,7 @@ void goDownstairs(Player players[], int player_count) {
 } 
 
 void goLabyrinth(Player players[], int player_count) {
-    const char *story = "You open the door and find yourself in a labyrinth. The walls are covered in moss and the air is damp. You continue and see that this is a maze of some sort. An eerie voice whispers in your ear, 'Left, , Left, Straight'. What do you do?\n"
+    const char *story = "You open the door and find yourself in a labyrinth. The walls are covered in moss and the air is damp. You continue and see that this is a maze of some sort. An eerie voice whispers in your ear, 'Left, Straight, Left, Straight'. What do you do?\n"
                         "1. Proceed forward\n"
                         "2. Turn back\n";
     for (int i = 0; i < player_count; i++) {
@@ -194,7 +194,21 @@ void insideLabyrinth(Player players[], int player_count) {
                         "1. Go Straight\n"
                         "2. Go Left\n"
                         "3. Go Right\n"
+                        "4. Go Back\n"
                         "4. Turn back\n";
+    for (int i = 0; i < player_count; i++) {
+        send(players[i].socket, story, strlen(story), 0);
+        printf("Sent story to player %d\n", i + 1); // Debug
+    }
+}
+
+void continueLabytrinth(Player players[], int player_count) {
+    const char *story = "You continue further in the maze. What do you do?\n"
+                        "1. Go Straight\n"
+                        "2. Go Left\n"
+                        "3. Go Right\n"
+                        "4. Go Back\n"
+                        "5. Give up\n";
     for (int i = 0; i < player_count; i++) {
         send(players[i].socket, story, strlen(story), 0);
         printf("Sent story to player %d\n", i + 1); // Debug
@@ -390,6 +404,18 @@ int main() {
     int thirdWall = 0;
     int wallsDone = 0;
 
+    //For Level 3
+    int pos0 = 0;
+    int pos1 = 0;
+    int pos2 = 0;
+    int pos3 = 0;
+    int pos4 = 0;
+    int pos5 = 0;
+    int pos6 = 0;
+    int pos7 = 0;
+    //Proceed
+    int inTheLabyrinth = 0;
+
     while (game_over == 0) {
         switch (level) {
             case 0: // Level 0
@@ -461,8 +487,14 @@ int main() {
                 goDownstairs(players, player_count);
                 break;
             case 3:
-                goLabyrinth(players, player_count);
+                if (inTheLabyrinth == 1) {
+                    continueLabytrinth(players, player_count);
+                } else {
+                    goLabyrinth(players, player_count);
+                }
                 break;
+            case 4:
+                finish(players, player_count);
             default:
                 snprintf(resultMessage, sizeof(resultMessage), "Unexpected error, contact a programmer!\n");
                 break;
@@ -869,8 +901,260 @@ int main() {
                     break;
             }
             printf("Level: %d, GroupChoice: %d, Result: %d\n", level, groupChoice, result); // Debug output
-        }
         // ============================================================================================================ 
+        } else if (level == 3) {
+            if (inTheLabyrinth == 0) {
+                switch(result) {
+                    case 1:
+                        snprintf(resultMessage, sizeof(resultMessage), "Into the fray.\n");
+                        pos0 = 1;
+                        inTheLabyrinth = 1;
+                        break;
+                    case 2:
+                        snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                        game_over = 1;
+                        break;
+                    default:
+                        snprintf(resultMessage, sizeof(resultMessage), "If you somehow get this message, contact a programmer\n");
+                        game_over = 1;
+                        break;
+                }
+            } else {
+                if(pos0 == 1) {
+                    printf("pos0: %d, pos1: %d, pos2: %d, pos3: %d, pos4:%d, pos5: %d, pos6: %d, pos7: %d\n", pos0, pos1, pos2, pos3, pos4, pos5, pos6, pos7);
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go straight\n");
+                            pos4 = 1;
+                            pos0 = 0;
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go left\n");
+                            pos1 = 1;
+                            pos0 = 0;
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go right\n");
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go back\n");
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                } 
+                if(pos1 == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go straight\n");
+                            pos2 = 1;
+                            pos1 = 0;
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go left\n");
+                            pos6 = 1;
+                            pos1 = 0;
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go right\n");
+                            pos0 = 1;
+                            pos1 = 0;
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go back\n");
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                }
+                if(pos2 == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go straight\n");
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go left\n");
+                            pos7 = 1;
+                            pos2 = 0;
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go right\n");
+                            pos4 = 1;
+                            pos2 = 0;
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go back\n");
+                            pos1 = 1;
+                            pos2 = 0;
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                }
+                if(pos3 == 1) {
+                    level = 4;
+                    break;
+                }
+                if(pos4 == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go straight\n");
+                            pos5 = 1;
+                            pos4 = 0;
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go left\n");
+                            pos2 = 1;
+                            pos4 = 0;
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go right\n");
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go back\n");
+                            pos0 = 1;
+                            pos4 = 0;
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                }
+                if(pos5 == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go straight\n");
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go left\n");
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go right\n");
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go back\n");
+                            pos4 = 1;
+                            pos5 = 0;
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                }
+                if(pos6 == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go straight\n");
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go left\n");
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go right\n");
+                            pos1 = 1;
+                            pos6 = 0;
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go back\n");
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                }
+                if(pos7 == 1) {
+                    switch(result) {
+                        case 1:
+                            snprintf(resultMessage, sizeof(resultMessage), "You go straight\n");
+                            pos3 = 1;
+                            pos7 = 0;
+                            break;
+                        case 2:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go left\n");
+                            break;
+                        case 3:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go right\n");
+                            break;
+                        case 4:
+                            snprintf(resultMessage, sizeof(resultMessage), "You cannot go back\n");
+                            break;
+                        case 5:
+                            snprintf(resultMessage, sizeof(resultMessage), "You give up\n");
+                            game_over = 1;
+                            break;
+                        case 99:
+                            snprintf(resultMessage, sizeof(resultMessage), "A labyrinth trap activates killing you. Game over\n");
+                            game_over = 1;
+                            break;
+                        default:
+                            snprintf(resultMessage, sizeof(resultMessage), "Error, contact a programmer\n");
+                            game_over = 1;
+                            break;
+                    }
+                }               
+            }
+
+            printf("Level: %d, Result: %d\n", level, result); // Debug output
+            printf("pos0: %d, pos1: %d, pos2: %d, pos3: %d, pos4:%d, pos5: %d, pos6: %d, pos7: %d\n", pos0, pos1, pos2, pos3, pos4, pos5, pos6, pos7);
+        // ============================================================================================================ 
+        }
         for (int i = 0; i < player_count; i++) {
             if (players[i].is_active) {
                 send(players[i].socket, resultMessage, strlen(resultMessage), 0);
